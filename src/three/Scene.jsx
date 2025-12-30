@@ -6,6 +6,7 @@ import Orbits from './Orbits';
 import { PLANETS } from '../data/planets';
 import useSolarStore from '../store/solarStore';
 import useFocusCamera from '../util/useFocusCamera';
+import StarField from './StarField';
 
 export default function Scene() {
   const controlsRef   = useRef();
@@ -48,6 +49,8 @@ export default function Scene() {
   return (
     <>
       <color attach="background" args={['#000000']} />
+
+      <StarField count={7000} radius={900} size={5.0} cometRate={0.03} />
 
       <Sun />
       <Orbits />
