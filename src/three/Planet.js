@@ -1,19 +1,45 @@
-import React, { useMemo, useRef } from 'react';
+// Planet.js (edited to support per-planet textures in Expo/RN)
+// REQUIREMENT: in your PLANETS data, add `texture: require('...')` for each planet.
+// Example in planets data:
+// { id:'earth', radius:1, color:'#fff', yearDays:365, distanceAU:1, texture: require('../../assets/textures/earth.jpg') }
+
+import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import { useTexture } from '@react-three/drei/native';
 import useSolarStore from '../store/solarStore';
 import { AU } from '../data/planets';
 
 export default function Planet({ data, timeScale = 1, onFocus }) {
   const ref = useRef();
-  const setSelected  = useSolarStore((s) => s.setSelected);
+  const setSelected = useSolarStore((s) => s.setSelected);
   const setPlanetPos = useSolarStore((s) => s.setPlanetPos);
+
+  // ✅ Load the planet texture (Expo-safe). If data.texture is missing, this will be null.
+  const texture = data.texture ? useTexture(data.texture) : null;
+
+  // ✅ Make texture look correct on mobile
+  useEffect(() => {
+    if (!texture) return;
+
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.generateMipmaps = false; // helps on Expo/EXGL + reduces warnings
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+
+    // RepeatWrapping is OK too, but ClampToEdge avoids seams unless you want repeating
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+
+    texture.needsUpdate = true;
+  }, [texture]);
 
   const angularSpeed = useMemo(
     () => (2 * Math.PI) / (data.yearDays || 365),
     [data.yearDays]
   );
-  const distance = data.distanceAU * AU;
+  const ORBIT_SPACING = 2.5;
+  const distance = data.distanceAU * AU * ORBIT_SPACING;
 
   const tmpWorld = useRef(new THREE.Vector3()).current;
 
@@ -49,7 +75,13 @@ export default function Planet({ data, timeScale = 1, onFocus }) {
     <group ref={ref} onClick={onTap} onPointerDown={(e) => e.stopPropagation()}>
       <mesh>
         <sphereGeometry args={[data.radius, 32, 32]} />
-        <meshStandardMaterial color={data.color} metalness={0.1} roughness={0.8} />
+
+        {/* ✅ If texture exists, use it. Otherwise fall back to color. */}
+        {texture ? (
+          <meshStandardMaterial map={texture} metalness={0.1} roughness={0.9} />
+        ) : (
+          <meshStandardMaterial color={data.color} metalness={0.1} roughness={0.8} />
+        )}
       </mesh>
     </group>
   );

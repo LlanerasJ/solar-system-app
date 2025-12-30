@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { OrbitControls } from '@react-three/drei/native';
 import Sun from './Sun';
+import SunModel from './SunModel';
 import Planet from './Planet';
 import Orbits from './Orbits';
 import { PLANETS } from '../data/planets';
@@ -52,7 +53,12 @@ export default function Scene() {
 
       <StarField count={7000} radius={900} size={5.0} cometRate={0.03} />
 
-      <Sun />
+      {/* <Sun /> */}
+
+      <ambientLight intensity={0.5} />
+      <pointLight position={[0,0,0]} intensity={500} distance={1000} />
+      <SunModel radius={2} />
+
       <Orbits />
 
       {PLANETS.map((p) => (
